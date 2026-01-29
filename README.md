@@ -4,9 +4,9 @@
 
 The **Customer Resolution Squad** is an AI-driven customer support system built for a retail/e-commerce context. It utilizes a team of specialized AI agents to automatically handle customer inquiries in three main areas:
 
-* **Order & Shipping Inquiries** – e.g. “Where’s my order?”, “When will my package arrive?”
-* **Billing & Refund Requests** – e.g. “I was charged twice,” “I want to return my item for a refund.”
-* **Technical Support** – e.g. “Your website crashes when I try to checkout,” “The mobile app isn’t working.”
+* **Order & Shipping Inquiries** – e.g., “Where’s my order?”, “When will my package arrive?”
+* **Billing & Refund Requests** – e.g., “I was charged twice,” “I want to return my item for a refund.”
+* **Technical Support** – e.g., “Your website crashes when I try to checkout,” “The mobile app isn’t working.”
 
 By divvying up tasks among specialist agents (Order Agent, Billing Agent, Tech Agent) and coordinating them with a central agent, the system can provide quick, context-appropriate responses.
 
@@ -29,10 +29,53 @@ By divvying up tasks among specialist agents (Order Agent, Billing Agent, Tech A
 * **TechAgent**: Troubleshoots using a knowledge base of known issues.
 * **Fallback/Escalation**: Handles unknown categories or failed resolutions.
 
-```text
-Customer Query --> [SupportCoordinator] --(classify)--> Specialist Agent (Order/Billing/Tech)
-                   [SupportCoordinator] <--(response)-- Specialist Agent
-Customer Query --> [SupportCoordinator] --(if unknown)--> Escalation (human)
+### Component Diagram
+
+```mermaid
+graph TD
+    %% Nodes
+    User([Customer])
+    Coord[SupportCoordinator]
+    
+    subgraph "Specialist Squad"
+        OA[OrderAgent]
+        BA[BillingAgent]
+        TA[TechAgent]
+        Esc[Fallback/Escalation]
+    end
+
+    subgraph "Data Sources (JSON)"
+        ODB[(data/orders.json)]
+        PDB[(data/policies.json)]
+        KB[(data/knowledge_base.json)]
+    end
+
+    %% Flow
+    User -->|Query| Coord
+    
+    Coord -->|Classify: Order| OA
+    Coord -->|Classify: Billing| BA
+    Coord -->|Classify: Tech| TA
+    Coord -.->|Unknown Category| Esc
+
+    %% Data Access
+    OA <-->|Read Status| ODB
+    BA <-->|Read Policy| PDB
+    TA <-->|Read Solutions| KB
+
+    %% Return Path
+    OA & BA & TA & Esc -->|Generated Response| Coord
+    Coord -->|Final Answer| User
+
+    %% Styling
+    classDef source fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef agent fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef coord fill:#dfd,stroke:#333,stroke-width:2px;
+    
+    class ODB,PDB,KB source;
+    class OA,BA,TA,Esc agent;
+    class Coord coord;
+
 ```
 
 All agents communicate via text and are simulated in a single Python script for clarity.
@@ -42,15 +85,15 @@ All agents communicate via text and are simulated in a single Python script for 
 ## Data Sources and Configuration
 
 * **Order Database** (`data/orders.json`):
+```json
+{
+  "1001": { "status": "In Transit", "ETA": "2026-02-15", "carrier": "UPS", "tracking": "UPS12345" }
+}
 
-  ```json
-  {
-    "1001": { "status": "In Transit", "ETA": "2026-02-15", "carrier": "UPS", "tracking": "UPS12345" }
-  }
-  ```
+```
+
 
 * **Billing Policies** (`data/policies.json`): Refund timelines, return policies.
-
 * **Tech Knowledge Base** (`data/knowledge_base.json`): Known issues and solutions.
 
 No API keys are needed for this offline prototype.
@@ -63,6 +106,7 @@ Run the main script:
 
 ```bash
 python support_bot.py
+
 ```
 
 ### Sample Interactions
@@ -115,4 +159,3 @@ python support_bot.py
 
 Project 2 showcases how specialized agents coordinated by a central logic can autonomously handle retail customer support at scale. Each agent remains simple and focused, enabling a robust and extensible system aligned with Responsible AI principles.
 
-**Next:** Project 3 – A self-healing software system (DevOps AI).
